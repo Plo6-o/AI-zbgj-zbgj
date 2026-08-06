@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>直播日报生成器</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{background:#f2f2f7;padding:12px}
+.w{max-width:480px;margin:0 auto}
+h1{font-size:20px;margin-bottom:4px}
+.s{color:#8e8e93;font-size:13px;margin-bottom:16px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px}
+.hd{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.hd input{padding:10px;border:1px solid #e5e5ea;border-radius:10px;font-size:15px}
+.hd input[type="text"]{width:100px}
+.hd input[type="time"]{width:90px}
+.hd span{color:#8e8e93;font-size:13px}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.f{margin-bottom:10px}
+.f label{display:block;font-size:12px;color:#8e8e93;margin-bottom:4px}
+.f input{width:100%;padding:12px;border:1px solid #e5e5ea;border-radius:10px;font-size:15px;-webkit-appearance:none}
+.b{display:flex;gap:10px;margin:16px 0}
+.b button{flex:1;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:600;background:#1c1c1e;color:#fff}
+.b button:first-child{background:#fff;color:#1c1c1e;border:1px solid #e5e5ea}
+.rc{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px}
+.rc h4{font-size:14px;margin-bottom:10px}
+.rw{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.rw span:first-child{color:#8e8e93}
+.rb{background:#1c1c1e;color:#fff;border-radius:14px;padding:16px;font-family:monospace;font-size:13px;line-height:1.8;white-space:pre-wrap;margin-bottom:10px}
+.rh{display:flex;justify-content:space-between;margin-bottom:8px}
+.rh span{font-weight:600}
+.cb{background:#34c759;color:#fff;border:none;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600}
+</style>
+</head>
+<body>
+<div class="w">
+<h1>直播日报生成器</h1>
+<p class="s">填累计数据→自动拆分→生成日报</p>
+<input type="date" id="d" style="width:100%;padding:12px;border:1px solid #e5e5ea;border-radius:10px;font-size:15px;margin-bottom:16px">
+<div id="hl"></div>
+<div class="b"><button onclick="ah()">+添加主播</button><button onclick="c()">计算并生成日报</button></div>
+<div id="o"></div>
+</div>
+<script>
+let H=[],I=0;
+function ah(){H.push({id:++I,n:'',s:'',e:'',g:0,v:0,f:0,o:0,r:0,a:0,fr:'',at:'',cr:'',er:'',sr:'',t1:'',t1g:0,t2:'',t2g:0});rh()}
+function rh(){
+let h='';
+for(let i=0;i<H.length;i++){
+let x=H[i];
+h+='<div class="card"><div class="hd"><input type="text" placeholder="姓名" value="'+x.n+'" onchange="sv('+x.id+',\'n\',this.value)"><input type="time" value="'+x.s+'" onchange="sv('+x.id+',\'s\',this.value)"><span>至</span><input type="time" value="'+x.e+'" onchange="sv('+x.id+',\'e\',this.value)"></div><div class="g"><div class="f"><label>累计GMV</label><input type="number" value="'+(x.g||'')+'" onchange="sv('+x.id+',\'g\',this.value)"></div><div class="f"><label>累计观看</label><input type="number" value="'+(x.v||'')+'" onchange="sv('+x.id+',\'v\',this.value)"></div><div class="f"><label>累计粉丝</label><input type="number" value="'+(x.f||'')+'" onchange="sv('+x.id+',\'f\',this.value)"></div><div class="f"><label>累计订单</label><input type="number" value="'+(x.o||'')+'" onchange="sv('+x.id+',\'o\',this.value)"></div><div class="f"><label>累计退款</label><input type="number" value="'+(x.r||'')+'" onchange="sv('+x.id+',\'r\',this.value)"></div><div class="f"><label>累计投流</label><input type="number" value="'+(x.a||'')+'" onchange="sv('+x.id+',\'a\',this.value)"></div></div><div style="height:1px;background:#e5e5ea;margin:12px 0"></div><div class="g"><div class="f"><label>粉丝成交%</label><input type="text" value="'+x.fr+'" onchange="sv('+x.id+',\'fr\',this.value)"></div><div class="f"><label>人均时长</label><input type="text" value="'+x.at+'" onchange="sv('+x.id+',\'at\',this.value)"></div><div class="f"><label>点击转化%</label><input type="text" value="'+x.cr+'" onchange="sv('+x.id+',\'cr\',this.value)"></div><div class="f"><label>曝光点击%</label><input type="text" value="'+x.er+'" onchange="sv('+x.id+',\'er\',this.value)"></div><div class="f"><label>短视频占比%</label><input type="text" value="'+x.sr+'" onchange="sv('+x.id+',\'sr\',this.value)"></div></div><div style="height:1px;background:#e5e5ea;margin:12px 0"></div><div class="g"><div class="f"><label>TOP1款号</label><input type="text" value="'+x.t1+'" onchange="sv('+x.id+',\'t1\',this.value)"></div><div class="f"><label>TOP1金额</label><input type="number" value="'+(x.t1g||'')+'" onchange="sv('+x.id+',\'t1g\',this.value)"></div><div class="f"><label>TOP2款号</label><input type="text" value="'+x.t2+'" onchange="sv('+x.id+',\'t2\',this.value)"></div><div class="f"><label>TOP2金额</label><input type="number" value="'+(x.t2g||'')+'" onchange="sv('+x.id+',\'t2g\',this.value)"></div></div></div>';
+}
+document.getElementById('hl').innerHTML=h;
+}
+function sv(id,k,v){let h=H.find(x=>x.id===id);if(!h)return;if(['g','v','f','o','r','a','t1g','t2g'].includes(k))h[k]=parseFloat(v)||0;else h[k]=v}
+function c(){
+let R=[];
+for(let i=0;i<H.length;i++){
+let h=H[i],p=i>0?H[i-1]:null,d={};
+['g','v','f','o','r','a'].forEach(k=>{let cu=h[k]||0,pr=p?(p[k]||0):0;d[k]=Math.max(0,Math.round((cu-pr)*100)/100)});
+let hr=0;
+if(h.s&&h.e){let[s1,s2]=h.s.split(':').map(Number),[e1,e2]=h.e.split(':').map(Number);hr=(e1*60+e2-s1*60-s2)/60;if(hr<0)hr+=24}
+let roi=d.a>0?(d.g/d.a).toFixed(2):'-',gph=hr>0?(d.g/hr).toFixed(1):'-';
+R.push({n:h.n||'主播'+(i+1),s:h.s,e:h.e,hr,...d,fr:h.fr||'-',at:h.at||'-',cr:h.cr||'-',er:h.er||'-',sr:h.sr||'-',t1:h.t1,t1g:h.t1g,t2:h.t2,t2g:h.t2g,roi,gph})
+}
+let D=document.getElementById('d').value||new Date().toISOString().slice(0,10),html='';
+for(let i=0;i<R.length;i++){
+let r=R[i];
+html+='<div class="rc"><h4>'+r.n+' '+r.s+'~'+r.e+'</h4><div class="rw"><span>独立GMV</span><span>¥'+r.g.toLocaleString()+'</span></div><div class="rw"><span>独立投流</span><span>¥'+r.a.toLocaleString()+'</span></div><div class="rw"><span>实际ROI</span><span>'+r.roi+'</span></div><div class="rw"><span>时长</span><span>'+(r.hr>0?r.hr.toFixed(1)+'h':'-')+'</span></div><div class="rw"><span>每小时GMV</span><span>'+(r.gph!='-'?'¥'+r.gph:r.gph)+'</span></div><div class="rw"><span>新增粉丝</span><span>'+r.f+'</span></div></div>';
+}
+for(let i=0;i<R.length;i++){
+let r=R[i];
+let rp='直播值班日报\n\n日期：'+D+'\n\n值班主播：'+r.n+'\n\n整体基础数据\n\n目标业绩：\n完成业绩：'+r.g+'\n排班时长：'+(r.hr>0?r.hr.toFixed(1)+'小时':'-')+'\n实际上播时长：'+(r.hr>0?r.hr.toFixed(1)+'小时':'-')+'\n目标客单价：\n实际客单价：\n每小时GMV：'+r.gph+'\n\n抖音直播数据（目标ROI：30）\n\nGMV：'+r.g+'\n下播退货金额：'+r.r+'\n投流金额：'+r.a+'\n实际ROI：'+r.roi+'\n累计观看人数：'+r.v+'\n新增粉丝：'+r.f+'\n涨粉率：\n新加购物团人数：0\n粉丝成交占比：'+r.fr+'\n人均观看时长：'+r.at+'\n商品点击转化率：'+r.cr+'\n商品曝光点击率：'+r.er+'\n\n短视频流量占比：'+r.sr+'\n短视频引流成交占比：\n短视频成交金额：\n\n抖音爆款TOP\n\nTOP1 款号/成交金额：'+(r.t1||'-')+' / '+(r.t1g||0)+'\nTOP2 款号/成交金额：'+(r.t2||'-')+' / '+(r.t2g||0);
+html+='<div class="rh"><span>'+r.n+'日报</span><button class="cb" onclick="cp(this,this.dataset.t)" data-t="'+rp.replace(/"/g,'&quot;')+'">复制日报</button></div><div class="rb">'+rp+'</div>';
+}
+document.getElementById('o').innerHTML=html;
+}
+function cp(btn,t){navigator.clipboard.writeText(t).then(()=>{btn.textContent='已复制';setTimeout(()=>btn.textContent='复制日报',1200)}).catch(()=>{let ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);btn.textContent='已复制';setTimeout(()=>btn.textContent='复制日报',1200)})}
+ah();ah();ah();
+document.getElementById('d').valueAsDate=new Date();
+</script>
+</body>
+</html>
+
