@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>直播日报生成器</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0; padding: 0; background: #f5f5f7; color: #1c1c1e; line-height: 1.5;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 16px; }
+  h1 { margin: 0 0 4px; font-size: 22px; font-weight: 700; }
+  .sub { color: #8e8e93; font-size: 14px; margin-bottom: 20px; }
+
+  .step { 
+    font-size: 14px; font-weight: 600; color: #1c1c1e; margin: 20px 0 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .step .num { 
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #1c1c1e; color: #fff; border-radius: 50%; 
+    width: 24px; height: 24px; font-size: 13px; font-weight: 700;
+  }
+
+  input[type="date"], input[type="time"], input[type="text"], input[type="number"] {
+    width: 100%; padding: 14px 16px; font-size: 16px; 
+    border: 1px solid #e5e5ea; border-radius: 12px; background: #fff;
+    -webkit-appearance: none; appearance: none;
+    font-family: inherit; font-variant-numeric: tabular-nums;
+  }
+  input:focus { outline: 2px solid #007aff; outline-offset: -1px; }
+
+  .card { 
+    background: #fff; border-radius: 16px; padding: 18px; 
+    margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .card-head { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .card-head input[type="text"] { flex: 1; min-width: 100px; }
+  .card-head input[type="time"] { width: 100px; }
+  .card-label { font-size: 13px; color: #8e8e93; margin-bottom: 12px; font-weight: 500; }
+
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 13px; color: #8e8e93; margin-bottom: 6px; font-weight: 500; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid4 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .btns { display: flex; gap: 12px; margin: 20px 0; }
+  button {
+    flex: 1; padding: 16px; border: none; border-radius: 14px;
+    font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
+    -webkit-appearance: none; appearance: none;
+  }
+  .btn-add { background: #fff; color: #1c1c1e; border: 1.5px solid #e5e5ea; }
+  .btn-calc { background: #1c1c1e; color: #fff; }
+  .btn-del { 
+    background: #fff; color: #ff3b30; border: 1.5px solid #ff3b30;
+    padding: 10px 14px; font-size: 13px; flex: 0; border-radius: 10px;
+  }
+  button:active { opacity: 0.8; transform: scale(0.98); }
+
+  .result { margin-top: 20px; }
+  .sum-card { 
+    background: #fff; border-radius: 16px; padding: 16px; 
+    margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .sum-card h4 { margin: 0 0 12px; font-size: 15px; }
+  .sum-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; }
+  .sum-row span:first-child { color: #8e8e93; }
+  .sum-row span:last-child { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .report-box { 
+    background: #1c1c1e; color: #fff; border-radius: 16px; padding: 18px;
+    font-family: "SF Mono", "Menlo", "Consolas", monospace; font-size: 14px; line-height: 1.9;
+    white-space: pre-wrap; word-break: break-word; margin-bottom: 12px;
+  }
+  .report-head { 
+    display: flex; justify-content: space-between; align-items: center; 
+    margin-bottom: 10px; padding: 0 4px;
+  }
+  .report-head span { font-size: 15px; font-weight: 600; }
+  .copy-btn { 
+    background: #34c759; color: #fff; border: none; 
+    padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 600;
+  }
+  .copy-btn.copied { background: #007aff; }
+
+  .divider { height: 1px; background: #e5e5ea; margin: 16px 0; }
+  .hint { font-size: 12px; color: #8e8e93; margin-top: 8px; line-height: 1.5; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: #8e8e93; }
+
+  .install-tip {
+    background: #007aff; color: #fff; padding: 12px 16px; border-radius: 12px;
+    font-size: 13px; margin-bottom: 16px; display: none;
+  }
+  .formula-note {
+    background: #fff9e6; border: 1px solid #ffe066; border-radius: 10px;
+    padding: 12px 14px; font-size: 13px; color: #8a6d0b; margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📱 直播日报生成器</h1>
+  <p class="sub">截图 OCR → 粘贴累计数字 → 自动拆分独立数据</p>
+
+  <div class="install-tip" id="installTip">
+    💡 点击浏览器菜单 →「添加到主屏幕」，以后像 App 一样打开
+  </div>
+
+  <div class="formula-note">
+    <strong>计算逻辑：</strong><br>
+    主播A：累计值 = 独立值<br>
+    主播B/C：独立值 = 当前累计 − 前一位累计<br>
+    <strong>实际 ROI = 独立 GMV ÷ 独立投流</strong>
+  </div>
+
+  <div class="step"><span class="num">1</span>选择日期</div>
+  <input type="date" id="rptDate">
+
+  <div class="step"><span class="num">2</span>填写每个主播下播时的累计数据</div>
+  <div id="hostList"></div>
+
+  <div class="btns">
+    <button class="btn-add" onclick="addHost()">+ 添加主播</button>
+    <button class="btn-calc" onclick="calc()">计算并生成日报</button>
+  </div>
+
+  <div id="output"></div>
+</div>
+
+<script>
+  let hosts = [];
+  let idc = 0;
+
+  if(/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.navigator.standalone) {
+    document.getElementById('installTip').style.display = 'block';
+  }
+
+  function addHost() {
+    const id = ++idc;
+    hosts.push({
+      id, name:'', start:'', end:'',
+      gmv:0, viewers:0, fans:0, orders:0, refund:0, adSpend:0,
+      fanRate:'', avgTime:'', clickRate:'', expRate:'', shortRate:'',
+      top1:'', top1gmv:0, top2:'', top2gmv:0
+    });
+    render();
+  }
+
+  function removeHost(id) {
+    if(hosts.length <= 1) return;
+    hosts = hosts.filter(h=>h.id!==id);
+    render();
+  }
+
+  function setVal(id, k, v) {
+    const h = hosts.find(h=>h.id===id);
+    if(!h) return;
+    if(['gmv','viewers','fans','orders','refund','adSpend','top1gmv','top2gmv'].includes(k)){
+      h[k] = parseFloat(v)||0;
+    } else {
+      h[k] = v;
+    }
+  }
+
+  function render() {
+    const el = document.getElementById('hostList');
+    if(hosts.length === 0) {
+      el.innerHTML = '<div class="empty-state">点击「添加主播」开始</div>';
+      return;
+    }
+    el.innerHTML = hosts.map((h,i)=>`
+      <div class="card">
+        <div class="card-head">
+          <input type="text" placeholder="主播姓名" value="${h.name}" onchange="setVal(${h.id},'name',this.value)">
+          <input type="time" value="${h.start}" onchange="setVal(${h.id},'start',this.value)">
+          <span style="font-size:13px;color:#8e8e93;">至</span>
+          <input type="time" value="${h.end}" onchange="setVal(${h.id},'end',this.value)">
+          ${hosts.length>1?`<button class="btn-del" onclick="removeHost(${h.id})">删除</button>`:''}
+        </div>
+
+        <div class="card-label">📊 下播时累计数据（从截图 OCR 粘贴）</div>
+        <div class="grid2">
+          <div class="field"><label>累计 GMV / 净成交</label><input type="number" placeholder="30871" value="${h.gmv||''}" onchange="setVal(${h.id},'gmv',this.value)"></div>
+          <div class="field"><label>累计观看人数</label><input type="number" placeholder="2835" value="${h.viewers||''}" onchange="setVal(${h.id},'viewers',this.value)"></div>
+          <div class="field"><label>累计新增粉丝</label><input type="number" placeholder="25" value="${h.fans||''}" onchange="setVal(${h.id},'fans',this.value)"></div>
+          <div class="field"><label>累计成交订单</label><input type="number" placeholder="30" value="${h.orders||''}" onchange="setVal(${h.id},'orders',this.value)"></div>
+          <div class="field"><label>累计退款金额</label><input type="number" placeholder="0" value="${h.refund||''}" onchange="setVal(${h.id},'refund',this.value)"></div>
+          <div class="field"><label>累计投流金额</label><input type="number" placeholder="1474.45" value="${h.adSpend||''}" onchange="setVal(${h.id},'adSpend',this.value)"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="card-label">📈 比率数据（截图里直接读，不参与相减）</div>
+        <div class="grid2">
+          <div class="field"><label>粉丝成交占比 %</label><input type="text" placeholder="27.66" value="${h.fanRate}" onchange="setVal(${h.id},'fanRate',this.value)"></div>
+          <div class="field"><label>人均观看时长</label><input type="text" placeholder="53秒" value="${h.avgTime}" onchange="setVal(${h.id},'avgTime',this.value)"></div>
+          <div class="field"><label>点击转化率 %</label><input type="text" placeholder="5.56" value="${h.clickRate}" onchange="setVal(${h.id},'clickRate',this.value)"></div>
+          <div class="field"><label>曝光点击率 %</label><input type="text" placeholder="7.42" value="${h.expRate}" onchange="setVal(${h.id},'expRate',this.value)"></div>
+          <div class="field"><label>短视频流量占比 %</label><input type="text" placeholder="4.03" value="${h.shortRate}" onchange="setVal(${h.id},'shortRate',this.value)"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="card-label">🔥 爆款 TOP2（截图商品排行）</div>
+        <div class="grid2">
+          <div class="field"><label>TOP1 款号</label><input type="text" placeholder="G851251401" value="${h.top1}" onchange="setVal(${h.id},'top1',this.value)"></div>
+          <div class="field"><label>TOP1 成交金额</label><input type="number" placeholder="12150" value="${h.top1gmv||''}" onchange="setVal(${h.id},'top1gmv',this.value)"></div>
+          <div class="field"><label>TOP2 款号</label><input type="text" placeholder="G8812613445X" value="${h.top2}" onchange="setVal(${h.id},'top2',this.value)"></div>
+          <div class="field"><label>TOP2 成交金额</label><input type="number" placeholder="14988" value="${h.top2gmv||''}" onchange="setVal(${h.id},'top2gmv',this.value)"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function calc() {
+    const results = [];
+    for(let i=0;i<hosts.length;i++) {
+      const h = hosts[i];
+      const prev = i>0 ? hosts[i-1] : null;
+      const diff = {};
+      ['gmv','viewers','fans','orders','refund','adSpend'].forEach(k=>{
+        const cur = h[k]||0;
+        const pre = prev ? (prev[k]||0) : 0;
+        diff[k] = Math.max(0, Math.round((cur - pre)*100)/100);
+      });
+
+      let hours = 0;
+      if(h.start && h.end) {
+        const [sh,sm] = h.start.split(':').map(Number);
+        const [eh,em] = h.end.split(':').map(Number);
+        hours = (eh*60+em - sh*60-sm)/60;
+        if(hours<0) hours += 24;
+      }
+
+      // 核心修复：ROI = 独立GMV / 独立投流（不再是 / 累计投流）
+      const roi = diff.adSpend>0 ? (diff.gmv/diff.adSpend).toFixed(2) : '-';
+      const gmvPerHour = hours>0 ? (diff.gmv/hours).toFixed(1) : '-';
+
+      results.push({
+        name: h.name || `主播${i+1}`,
+        start: h.start, end: h.end, hours,
+        ...diff,
+        fanRate: h.fanRate||'-', avgTime: h.avgTime||'-',
+        clickRate: h.clickRate||'-', expRate: h.expRate||'-', shortRate: h.shortRate||'-',
+        top1: h.top1, top1gmv: h.top1gmv,
+        top2: h.top2, top2gmv: h.top2gmv,
+        roi, gmvPerHour
+      });
+    }
+
+    renderResult(results);
+  }
+
+  function renderResult(results) {
+    const date = document.getElementById('rptDate').value || new Date().toISOString().slice(0,10);
+    let html = '<div class="result">';
+    html += '<div class="step"><span class="num">3</span>拆分结果（已修正 ROI 计算）</div>';
+
+    results.forEach(r=>{
+      html += `<div class="sum-card">
+        <h4>${r.name} · ${r.start||'?'}~${r.end||'?'}</h4>
+        <div class="sum-row"><span>独立 GMV</span><span>¥${r.gmv.toLocaleString()}</span></div>
+        <div class="sum-row"><span>独立投流</span><span>¥${r.adSpend.toLocaleString()}</span></div>
+        <div class="sum-row"><span>实际 ROI</span><span style="color:${parseFloat(r.roi)>=30?'#34c759':(parseFloat(r.roi)>=20?'#ff9500':'#ff3b30')}">${r.roi}</span></div>
+        <div class="sum-row"><span>上播时长</span><span>${r.hours>0?r.hours.toFixed(1)+'h':'-'}</span></div>
+        <div class="sum-row"><span>每小时 GMV</span><span>${r.gmvPerHour!=='-'?'¥'+r.gmvPerHour:r.gmvPerHour}</span></div>
+        <div class="sum-row"><span>新增粉丝</span><span>${r.fans.toLocaleString()}</span></div>
+        <div class="sum-row"><span>观看人数</span><span>${r.viewers.toLocaleString()}</span></div>
+        <div class="sum-row"><span>成交订单</span><span>${r.orders.toLocaleString()}</span></div>
+      </div>`;
+    });
+
+    html += '<div class="step"><span class="num">4</span>复制日报发给老板</div>';
+
+    results.forEach((r,idx)=>{
+      const report = `直播值班日报
+
+日期：${date}
+
+值班主播：${r.name}
+
+整体基础数据
+
+目标业绩：
+完成业绩：${r.gmv}
+排班时长：${r.hours>0?r.hours.toFixed(1)+'小时':'-'}
+实际上播时长：${r.hours>0?r.hours.toFixed(1)+'小时':'-'}
+目标客单价：
+实际客单价：
+每小时GMV：${r.gmvPerHour}
+
+抖音直播数据（目标ROI：30）
+
+GMV：${r.gmv}
+下播退货金额：${r.refund}
+投流金额：${r.adSpend}
+实际ROI：${r.roi}
+累计观看人数：${r.viewers}
+新增粉丝：${r.fans}
+涨粉率：
+新加购物团人数：0
+粉丝成交占比：${r.fanRate}
+人均观看时长：${r.avgTime}
+商品点击转化率：${r.clickRate}
+商品曝光点击率：${r.expRate}
+
+短视频流量占比：${r.shortRate}
+短视频引流成交占比：
+短视频成交金额：
+
+抖音爆款TOP
+
+TOP1 款号/成交金额：${r.top1||'-'} / ${r.top1gmv||0}
+TOP2 款号/成交金额：${r.top2||'-'} / ${r.top2gmv||0}`;
+
+      html += `<div class="report-head"><span>${r.name} 日报</span><button class="copy-btn" onclick="copyText(this,this.getAttribute('data-text'))" data-text="${report.replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}">复制日报</button></div>
+        <div class="report-box">${report}</div>`;
+    });
+
+    html += '</div>';
+    document.getElementById('output').innerHTML = html;
+
+    setTimeout(()=>{
+      const out = document.getElementId('output');
+      if(out) out.scrollIntoView({behavior:'smooth', block:'start'});
+    }, 100);
+  }
+
+  function copyText(btn, text) {
+    navigator.clipboard.writeText(text).then(()=>{
+      btn.classList.add('copied');
+      btn.textContent = '✓ 已复制';
+      setTimeout(()=>{ btn.classList.remove('copied'); btn.textContent='复制日报'; }, 1500);
+    }).catch(()=>{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      btn.classList.add('copied');
+      btn.textContent = '✓ 已复制';
+      setTimeout(()=>{ btn.classList.remove('copied'); btn.textContent='复制日报'; }, 1500);
+    });
+  }
+
+  addHost(); addHost(); addHost();
+  document.getElementById('rptDate').valueAsDate = new Date();
+</script>
+</body>
+  </html>
